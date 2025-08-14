@@ -14,7 +14,7 @@ RUN ./mvnw dependency:go-offline
 COPY src ./src
 
 # Uygulamayı paketle
-RUN ./mvnw -DskipTests package
+RUN ./mvnw clean -DskipTests package
 
 
 # Adım 2: Çalıştırma Ortamı - Sadece JRE ve JAR dosyasını içerir
