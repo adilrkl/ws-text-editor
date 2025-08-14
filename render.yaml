@@ -3,8 +3,6 @@ services:
   - type: pserv
     name: text-editor-db
     plan: free
-    databaseName: wstexteditor
-    user: wstext
     ipAllowList: [] # Her yerden erişime izin ver (uygulama servisleri için)
 
   # Java Backend Web Servisi
