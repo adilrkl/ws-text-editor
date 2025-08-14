@@ -1,0 +1,3 @@
+[submodule "y-websocket"]
+	path = y-websocket
+	url = https://github.com/yjs/y-websocket.git 
