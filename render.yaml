@@ -37,4 +37,7 @@ services:
     # rootDir kaldırıldı, komutlar proje kökünden çalışacak
     buildCommand: "git submodule update --init --recursive && cd y-websocket && npm install"
     startCommand: "cd y-websocket && node src/y-websocket.js"
-    healthCheckPath: "/" 
+    healthCheckPath: "/"
+    envVars:
+      - key: HOST
+        value: "0.0.0.0" 
