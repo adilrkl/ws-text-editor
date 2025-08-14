@@ -7,6 +7,9 @@ WORKDIR /app
 COPY .mvn/ .mvn
 COPY mvnw pom.xml ./
 
+# mvnw betiğine çalıştırma izni ver
+RUN chmod +x ./mvnw
+
 # Bağımlılıkları indir
 RUN ./mvnw dependency:go-offline
 
