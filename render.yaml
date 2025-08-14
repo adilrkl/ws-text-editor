@@ -35,6 +35,6 @@ services:
     plan: free
     env: node
     rootDir: ./y-websocket
-    buildCommand: "npm install"
+    buildCommand: "git submodule update --init --recursive && npm install"
     startCommand: "node src/y-websocket.js"
     healthCheckPath: "/" 
