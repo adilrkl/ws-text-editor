@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Text Editor - [[${document.uniqueId}]]</title>
+    <link rel="stylesheet" th:href="@{/style.css}">
+</head>
+<body>
+    <h1>Collaborative Text Editor</h1>
+    <p>Document ID: <span th:text="${document.uniqueId}"></span></p>
+    <div>
+        Connection status: <span class="connection-status"></span>
+    </div>
+    <div id="editor-container" style="position: relative; width: 100%; height: 400px;">
+        <textarea id="editor-textarea" style="width: 100%; height: 100%;"></textarea>
+        <div id="cursor-overlay" style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; pointer-events: none;"></div>
+    </div>
+
+    <script type="module" th:inline="javascript">
+        /*<![CDATA[*/
+        const ywsUrl = /*[[${ywsUrl}]]*/ 'ws://localhost:1234';
+        const docId = /*[[${document.uniqueId}]]*/ 'default-room';
+        /*]]>*/
+
+        import * as Y from 'https://esm.sh/yjs@14.0.0-6';
+        import { WebsocketProvider } from 'https://esm.sh/@y/websocket@4.0.0-1?alias=yjs:https://esm.sh/yjs@14.0.0-6';
+
+        const ydoc = new Y.Doc();
+        // Room name is based on the unique document ID from the server
+        const provider = new WebsocketProvider(ywsUrl, docId, ydoc);
+        const ytext = ydoc.getText('codemirror');
+        const editor = document.getElementById('editor-textarea');
+        
+        // Add minimal diff helper to avoid full rewrites
+        function computeTextDiff(oldStr, newStr) {
+            let start = 0;
+            const oldLen = oldStr.length;
+            const newLen = newStr.length;
+            while (start < oldLen && start < newLen && oldStr.charCodeAt(start) === newStr.charCodeAt(start)) {
+                start++;
+            }
+            let endOld = oldLen - 1;
+            let endNew = newLen - 1;
+            while (endOld >= start && endNew >= start && oldStr.charCodeAt(endOld) === newStr.charCodeAt(endNew)) {
+                endOld--;
+                endNew--;
+            }
+            const deleteCount = Math.max(0, endOld - start + 1);
+            const insertText = newStr.slice(start, endNew + 1);
+            return { index: start, deleteCount, insertText };
+        }
+
+        // Update textarea when ytext changes (ignore local-origin updates)
+        ytext.observe(event => {
+            if (event && event.transaction && event.transaction.origin === 'local') return;
+            const next = ytext.toString();
+            if (editor.value !== next) {
+                const selStart = editor.selectionStart;
+                const selEnd = editor.selectionEnd;
+                editor.value = next;
+                try { editor.setSelectionRange(selStart, selEnd); } catch (e) {}
+            }
+        });
+
+        // Update ytext when textarea changes using minimal diff, mark origin as 'local'
+        editor.addEventListener('input', () => {
+            const before = ytext.toString();
+            const after = editor.value;
+            if (before === after) return;
+            const { index, deleteCount, insertText } = computeTextDiff(before, after);
+            ydoc.transact(() => {
+                if (deleteCount > 0) ytext.delete(index, deleteCount);
+                if (insertText.length > 0) ytext.insert(index, insertText);
+            }, 'local');
+        });
+
+        // Handle connection status display
+        const connectionStatusEl = document.querySelector('.connection-status');
+        provider.on('status', event => {
+            connectionStatusEl.textContent = event.status;
+            connectionStatusEl.className = 'connection-status ' + event.status;
+        });
+        
+        // Set initial value
+        provider.on('sync', isSynced => {
+            if (isSynced) {
+                editor.value = ytext.toString();
+            }
+        });
+
+        // Mouse tracking (awareness-based)
+        const container = document.getElementById('editor-container');
+        const overlay = document.getElementById('cursor-overlay');
+        const awareness = provider.awareness;
+        const localClientId = awareness.clientID || ydoc.clientID;
+
+        function colorFromId(id) {
+            const hue = (id * 47) % 360;
+            return `hsl(${hue}, 80%, 55%)`;
+        }
+
+        const localUser = { name: `User ${localClientId}`, color: colorFromId(localClientId) };
+        awareness.setLocalState({ user: localUser, cursor: null });
+
+        function clamp01(v) { return Math.max(0, Math.min(1, v)); }
+
+        container.addEventListener('mousemove', (e) => {
+            const rect = container.getBoundingClientRect();
+            const x = clamp01((e.clientX - rect.left) / rect.width);
+            const y = clamp01((e.clientY - rect.top) / rect.height);
+            awareness.setLocalStateField('cursor', { x, y, t: Date.now() });
+        });
+
+        container.addEventListener('mouseleave', () => {
+            awareness.setLocalStateField('cursor', null);
+        });
+
+        function renderCursors() {
+            const rect = container.getBoundingClientRect();
+            overlay.innerHTML = '';
+            const states = Array.from(awareness.getStates().entries());
+            for (const [clientId, state] of states) {
+                if (!state || clientId === localClientId) continue;
+                const cursor = state.cursor;
+                if (!cursor || typeof cursor.x !== 'number' || typeof cursor.y !== 'number') continue;
+                const user = state.user || { name: `User ${clientId}`, color: colorFromId(clientId) };
+                const x = cursor.x * rect.width;
+                const y = cursor.y * rect.height;
+
+                const el = document.createElement('div');
+                el.style.position = 'absolute';
+                el.style.left = `${x}px`;
+                el.style.top = `${y}px`;
+                el.style.transform = 'translate(-50%, -50%)';
+                el.style.pointerEvents = 'none';
+
+                const dot = document.createElement('div');
+                dot.style.width = '8px';
+                dot.style.height = '8px';
+                dot.style.borderRadius = '50%';
+                dot.style.background = user.color;
+                dot.style.boxShadow = '0 0 0 2px rgba(255,255,255,0.8)';
+                el.appendChild(dot);
+
+                const label = document.createElement('div');
+                label.textContent = user.name;
+                label.style.position = 'absolute';
+                label.style.left = '10px';
+                label.style.top = '-6px';
+                label.style.fontSize = '12px';
+                label.style.padding = '2px 6px';
+                label.style.borderRadius = '10px';
+                label.style.color = '#fff';
+                label.style.background = user.color;
+                label.style.boxShadow = '0 1px 2px rgba(0,0,0,0.2)';
+                el.appendChild(label);
+
+                overlay.appendChild(el);
+            }
+        }
+
+        awareness.on('update', renderCursors);
+        window.addEventListener('resize', renderCursors);
+        if ('ResizeObserver' in window) {
+            new ResizeObserver(() => renderCursors()).observe(container);
+        }
+        renderCursors();
+
+    </script>
+</body>
+</html>

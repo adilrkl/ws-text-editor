@@ -1,0 +1,54 @@
+services:
+  # PostgreSQL Veritabanı
+  - type: pserv
+    name: text-editor-db
+    plan: free
+    databaseName: wstexteditor
+    user: wstext
+    ipAllowList: [] # Her yerden erişime izin ver (uygulama servisleri için)
+
+  # Java Backend Web Servisi
+  - type: web
+    name: ws-backend
+    plan: free
+    env: java
+    buildCommand: "./mvnw -DskipTests package"
+    startCommand: "java -jar target/*.jar"
+    healthCheckPath: "/login"
+    envVars:
+      - key: DATABASE_URL # Render PostgreSQL'in bağlantı bilgisini bu değişkende sunar
+        fromDatabase:
+          name: text-editor-db
+          property: connectionString
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: text-editor-db
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: text-editor-db
+          property: password
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: text-editor-db
+          property: connectionString
+      - key: Y_WEBSOCKET_BROWSER_URL
+        fromService:
+          type: web
+          name: y-websocket
+          property: url
+      - key: Y_WEBSOCKET_URL # Servisler arası iletişim için
+        fromService:
+          type: web
+          name: y-websocket
+          property: url
+
+  # Y-Websocket Servisi
+  - type: web
+    name: y-websocket
+    plan: free
+    env: node
+    rootDir: ./y-websocket
+    buildCommand: "npm install"
+    startCommand: "npm start"
+    healthCheckPath: "/" 

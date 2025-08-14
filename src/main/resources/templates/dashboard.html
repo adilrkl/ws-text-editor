@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Dashboard</title>
+    <link rel="stylesheet" th:href="@{/style.css}">
+</head>
+<body>
+    <div class="container">
+        <h1>My Documents</h1>
+        <div th:if="${param.loginSuccess}" class="alert success">Giriş başarılı.</div>
+        <form th:action="@{/documents/create}" method="post">
+            <button type="submit">Create New Document</button>
+        </form>
+        <hr/>
+        <h2>Existing Documents</h2>
+        <ul>
+            <li th:each="doc : ${documents}">
+                <a th:href="@{/editor/{id}(id=${doc.uniqueId})}" th:text="'Document ' + ${doc.uniqueId}"></a>
+            </li>
+        </ul>
+        <form th:action="@{/logout}" method="post">
+            <button type="submit">Logout</button>
+        </form>
+    </div>
+</body>
+</html> 

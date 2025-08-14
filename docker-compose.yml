@@ -1,0 +1,47 @@
+services:
+  backend:
+    build: .
+    container_name: java_backend
+    ports:
+      - "9090:9090"
+    environment:
+      - Y_WEBSOCKET_URL=ws://ywebsocket:1234
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/wstexteditor?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=wstext
+      - SPRING_DATASOURCE_PASSWORD=secret
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=com.mysql.cj.jdbc.Driver
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.MySQLDialect
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    depends_on:
+      - ywebsocket
+      - mysql
+    restart: unless-stopped
+
+  ywebsocket:
+    build:
+      context: ./y-websocket
+    container_name: y_websocket
+    environment:
+      - HOST=0.0.0.0
+      - PORT=1234
+    ports:
+      - "1234:1234"
+    restart: unless-stopped 
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_db
+    environment:
+      - MYSQL_DATABASE=wstexteditor
+      - MYSQL_USER=wstext
+      - MYSQL_PASSWORD=secret
+      - MYSQL_ROOT_PASSWORD=rootsecret
+    ports:
+      - "3306:3306"
+    command: ["--default-authentication-plugin=mysql_native_password"]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped 
