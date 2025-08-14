@@ -1,15 +1,15 @@
-services:
-  # PostgreSQL Veritabanı (hatalar düzeltildi)
-  - type: pserv
-    name: text-editor-db
+databases:
+  - name: text-editor-db
     plan: free
+    postgresMajorVersion: 14
 
-  # Java Backend Web Servisi (artık Docker kullanıyor)
+services:
+  # Java Backend Web Servisi (Docker ile)
   - type: web
     name: ws-backend
     plan: free
     env: docker
-    dockerfilePath: ./Dockerfile # Az önce oluşturduğumuz Dockerfile'ın yolu
+    dockerfilePath: ./Dockerfile
     healthCheckPath: /login
     envVars:
       - key: SPRING_DATASOURCE_URL
@@ -25,16 +25,16 @@ services:
           name: text-editor-db
           property: password
       - key: Y_WEBSOCKET_BROWSER_URL
-        value: "wss://y-websocket-svc.onrender.com" # 'url' hatası düzeltildi
-      - key: Y_WEBSOCKET_URL # Servisler arası iletişim için
+        value: "wss://y-websocket-svc.onrender.com"
+      - key: Y_WEBSOCKET_URL
         value: "wss://y-websocket-svc.onrender.com"
 
-  # Y-Websocket Servisi (adı backend'e uyumlu hale getirildi)
+  # Y-Websocket Servisi
   - type: web
     name: y-websocket-svc
     plan: free
     env: node
     rootDir: ./y-websocket
     buildCommand: "npm install"
-    startCommand: "node src/y-websocket.js" # 'npm start' bazen sorun çıkarabilir, doğrudan dosyayı çalıştırıyoruz
+    startCommand: "node src/y-websocket.js"
     healthCheckPath: "/" 
