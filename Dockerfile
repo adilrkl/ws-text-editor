@@ -1,34 +1,32 @@
-# --- AŞAMA 1: Projeyi Build Etme (Derleme) ---
-# Maven ve JDK içeren bir imaj kullanarak projeyi derle.
-FROM maven:3.8-openjdk-17 AS builder
+# Adım 1: Build Ortamı - Kodu derleyip JAR dosyasını oluştur
+FROM eclipse-temurin:17-jdk-jammy as builder
 
-# Çalışma dizini oluştur
 WORKDIR /app
 
-# Önce sadece pom.xml'i kopyala. Bu sayede bağımlılıklar sadece gerektiğinde indirilir.
-COPY pom.xml .
-RUN mvn dependency:go-offline
+# Maven wrapper'ı kopyala
+COPY .mvn/ .mvn
+COPY mvnw pom.xml ./
 
-# Tüm kaynak kodunu kopyala
+# Bağımlılıkları indir
+RUN ./mvnw dependency:go-offline
+
+# Uygulama kaynak kodunu kopyala
 COPY src ./src
 
-# Projeyi paketle (testleri atlayarak süreci hızlandırabilirsin)
-RUN mvn clean package -DskipTests
+# Uygulamayı paketle
+RUN ./mvnw -DskipTests package
 
 
-# --- AŞAMA 2: Çalıştırma İmajını Oluşturma ---
-# Sadece Java Runtime (JRE) içeren daha küçük bir imaj kullan.
-FROM eclipse-temurin:17-jre-alpine
+# Adım 2: Çalıştırma Ortamı - Sadece JRE ve JAR dosyasını içerir
+FROM eclipse-temurin:17-jre-jammy
 
-# Çalışma dizini
 WORKDIR /app
 
-# Önceki aşamada derlenen JAR dosyasını bu yeni imaja kopyala
-# JAR adının doğru olduğundan emin ol (pom.xml'den kontrol et).
+# Build ortamından sadece JAR dosyasını kopyala
 COPY --from=builder /app/target/*.jar app.jar
 
-# Spring Boot uygulamasının çalışacağı port (docker-compose'da 9090 olarak maplendi)
+# Uygulamanın çalışacağı port
 EXPOSE 9090
 
 # Uygulamayı başlat
-ENTRYPOINT ["java","-jar","/app/app.jar"]
+CMD ["java", "-jar", "app.jar"]

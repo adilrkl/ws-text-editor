@@ -1,20 +1,18 @@
 services:
-  # PostgreSQL Veritabanı
+  # PostgreSQL Veritabanı (hatalar düzeltildi)
   - type: pserv
     name: text-editor-db
     plan: free
-    ipAllowList: [] # Her yerden erişime izin ver (uygulama servisleri için)
 
-  # Java Backend Web Servisi
+  # Java Backend Web Servisi (artık Docker kullanıyor)
   - type: web
     name: ws-backend
     plan: free
-    env: java
-    buildCommand: "./mvnw -DskipTests package"
-    startCommand: "java -jar target/*.jar"
-    healthCheckPath: "/login"
+    env: docker
+    dockerfilePath: ./Dockerfile # Az önce oluşturduğumuz Dockerfile'ın yolu
+    healthCheckPath: /login
     envVars:
-      - key: DATABASE_URL # Render PostgreSQL'in bağlantı bilgisini bu değişkende sunar
+      - key: SPRING_DATASOURCE_URL
         fromDatabase:
           name: text-editor-db
           property: connectionString
@@ -26,27 +24,17 @@ services:
         fromDatabase:
           name: text-editor-db
           property: password
-      - key: SPRING_DATASOURCE_URL
-        fromDatabase:
-          name: text-editor-db
-          property: connectionString
       - key: Y_WEBSOCKET_BROWSER_URL
-        fromService:
-          type: web
-          name: y-websocket
-          property: url
+        value: "wss://y-websocket-svc.onrender.com" # 'url' hatası düzeltildi
       - key: Y_WEBSOCKET_URL # Servisler arası iletişim için
-        fromService:
-          type: web
-          name: y-websocket
-          property: url
+        value: "wss://y-websocket-svc.onrender.com"
 
-  # Y-Websocket Servisi
+  # Y-Websocket Servisi (adı backend'e uyumlu hale getirildi)
   - type: web
-    name: y-websocket
+    name: y-websocket-svc
     plan: free
     env: node
     rootDir: ./y-websocket
     buildCommand: "npm install"
-    startCommand: "npm start"
+    startCommand: "node src/y-websocket.js" # 'npm start' bazen sorun çıkarabilir, doğrudan dosyayı çalıştırıyoruz
     healthCheckPath: "/" 
