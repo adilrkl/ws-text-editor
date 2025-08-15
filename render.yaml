@@ -39,14 +39,10 @@ services:
       - key: Y_WEBSOCKET_URL
         value: "wss://y-websocket-svc.onrender.com"
 
-  # Y-Websocket Servisi (Docker ile)
+  # Y-Websocket Servisi (Node ile - Submodule sorunu çözümü)
   - type: web
     name: y-websocket-svc
     plan: free
-    env: docker
-    dockerfilePath: ./y-websocket/Dockerfile
-    envVars:
-      - key: HOST
-        value: "0.0.0.0"
-      - key: PORT
-        value: "1234" 
+    env: node
+    buildCommand: "npm install -g @y/websocket-server"
+    startCommand: "HOST=0.0.0.0 PORT=1234 npx @y/websocket-server" 
