@@ -12,10 +12,18 @@ services:
     dockerfilePath: ./Dockerfile
     healthCheckPath: /login
     envVars:
-      - key: SPRING_DATASOURCE_URL
+      - key: SPRING_DATASOURCE_HOST
         fromDatabase:
           name: text-editor-db
-          property: connectionString
+          property: host
+      - key: SPRING_DATASOURCE_PORT
+        fromDatabase:
+          name: text-editor-db
+          property: port
+      - key: SPRING_DATASOURCE_DB
+        fromDatabase:
+          name: text-editor-db
+          property: database
       - key: SPRING_DATASOURCE_USERNAME
         fromDatabase:
           name: text-editor-db
@@ -24,6 +32,8 @@ services:
         fromDatabase:
           name: text-editor-db
           property: password
+      - key: PORT
+        value: "10000"
       - key: Y_WEBSOCKET_BROWSER_URL
         value: "wss://y-websocket-svc.onrender.com"
       - key: Y_WEBSOCKET_URL

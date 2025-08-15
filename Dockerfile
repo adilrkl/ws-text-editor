@@ -29,7 +29,7 @@ WORKDIR /app
 COPY --from=builder /app/target/*.jar app.jar
 
 # Uygulamanın çalışacağı port
-EXPOSE 9090
+EXPOSE 10000
 
 # Uygulamayı başlat
 CMD ["java", "-jar", "app.jar"]
