@@ -2,84 +2,131 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>Code Share - [[${document.uniqueId}]]</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <link rel="stylesheet" th:href="@{/style.css}">
     <style>
         .header {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            gap: 15px;
             margin-bottom: 20px;
             padding: 15px 0;
             border-bottom: 2px solid #e0e0e0;
         }
+        
         .header h1 {
             margin: 0;
             color: #2d3748;
-            font-size: 28px;
+            font-size: 24px;
+            text-align: center;
         }
+        
         .controls {
             display: flex;
-            gap: 15px;
+            gap: 10px;
             align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
         }
+        
         .language-selector {
-            padding: 8px 12px;
+            padding: 12px 16px;
             border: 2px solid #e0e0e0;
-            border-radius: 8px;
+            border-radius: 12px;
             background: white;
-            font-size: 14px;
+            font-size: 16px;
             cursor: pointer;
+            flex: 1;
+            min-width: 120px;
+            max-width: 200px;
         }
+        
         .copy-btn {
-            padding: 8px 16px;
+            padding: 12px 20px;
             background: #4CAF50;
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
             cursor: pointer;
             font-weight: bold;
             transition: background 0.3s;
+            font-size: 16px;
+            min-width: 120px;
         }
+        
         .copy-btn:hover {
             background: #45a049;
         }
+        
+        .copy-btn:active {
+            transform: scale(0.98);
+        }
+        
         .editor-wrapper {
             position: relative;
             border: 2px solid #e0e0e0;
-            border-radius: 12px;
+            border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            background: white;
         }
+        
         .editor-header {
             background: #f8f9fa;
-            padding: 12px 20px;
+            padding: 16px 20px;
             border-bottom: 1px solid #e0e0e0;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            gap: 12px;
         }
+        
         .document-info {
             font-size: 14px;
             color: #6c757d;
+            text-align: center;
         }
+        
         .connection-indicator {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
-            font-size: 12px;
+            font-size: 14px;
         }
+        
         .status-dot {
-            width: 8px;
-            height: 8px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
         }
+        
         .connected .status-dot { background: #28a745; }
         .disconnected .status-dot { background: #dc3545; }
         .connecting .status-dot { background: #ffc107; }
+        
         #editor-container {
-            height: 500px;
+            height: 400px;
             position: relative;
+            min-height: 300px;
         }
+        
+        /* Mobile fallback textarea */
+        #mobile-editor {
+            display: none;
+            width: 100%;
+            height: 400px;
+            border: none;
+            outline: none;
+            padding: 20px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            background: #f8f9fa;
+            color: #333;
+            resize: vertical;
+            min-height: 300px;
+        }
+        
         #cursor-overlay {
             position: absolute;
             top: 0;
@@ -89,20 +136,156 @@
             pointer-events: none;
             z-index: 1000;
         }
+        
         .toast {
             position: fixed;
             top: 20px;
             right: 20px;
+            left: 20px;
             background: #4CAF50;
             color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
+            padding: 16px 20px;
+            border-radius: 12px;
             opacity: 0;
             transition: opacity 0.3s;
             z-index: 2000;
+            text-align: center;
+            font-weight: 500;
         }
+        
         .toast.show {
             opacity: 1;
+        }
+        
+        .mobile-controls {
+            display: none;
+            padding: 15px;
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .mobile-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: 1;
+            min-width: 120px;
+            max-width: 200px;
+        }
+        
+        .mobile-btn.primary {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .mobile-btn.secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .mobile-btn:active {
+            transform: scale(0.95);
+        }
+        
+        /* Desktop styles */
+        @media (min-width: 769px) {
+            .header {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .header h1 {
+                font-size: 28px;
+                text-align: left;
+            }
+            
+            .controls {
+                justify-content: flex-end;
+            }
+            
+            .editor-header {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .document-info, .connection-indicator {
+                text-align: left;
+            }
+            
+            #editor-container {
+                height: 500px;
+            }
+            
+            #mobile-editor {
+                height: 500px;
+            }
+        }
+        
+        /* Mobile styles */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .toast {
+                right: 10px;
+                left: 10px;
+                top: 10px;
+            }
+            
+            .language-selector, .copy-btn {
+                flex: 1;
+                max-width: none;
+            }
+            
+            /* Show mobile controls */
+            .mobile-controls {
+                display: flex;
+            }
+            
+            /* Adjust editor height for mobile */
+            #editor-container, #mobile-editor {
+                height: 350px;
+                min-height: 250px;
+            }
+            
+            /* Make buttons larger for touch */
+            .controls button, .controls select {
+                min-height: 48px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 20px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .language-selector, .copy-btn {
+                width: 100%;
+                max-width: none;
+            }
+            
+            #editor-container, #mobile-editor {
+                height: 300px;
+            }
+            
+            .editor-wrapper {
+                border-radius: 12px;
+            }
         }
     </style>
 </head>
@@ -120,7 +303,7 @@
                 <option value="json">JSON</option>
                 <option value="plaintext">Plain Text</option>
             </select>
-            <button id="copy-btn" class="copy-btn">📋 Copy Code</button>
+            <button id="copy-btn" class="copy-btn">📋 Copy</button>
         </div>
     </div>
 
@@ -136,6 +319,12 @@
         </div>
         <div id="editor-container">
             <div id="cursor-overlay"></div>
+        </div>
+        <textarea id="mobile-editor" placeholder="Start typing your code here..."></textarea>
+        
+        <div class="mobile-controls">
+            <button id="mobile-copy-btn" class="mobile-btn primary">📋 Copy Code</button>
+            <button id="mobile-fullscreen" class="mobile-btn secondary">⛶ Focus Mode</button>
         </div>
     </div>
 
@@ -157,48 +346,97 @@
         let provider;
         let awareness;
         let isUpdatingFromY = false;
+        let isMobile = false;
+        let currentEditor; // Will be either Monaco or textarea
 
-        // Initialize Monaco Editor
-        require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs' } });
-        require(['vs/editor/editor.main'], function () {
-            // Configure Monaco
-            monaco.editor.defineTheme('code-share-theme', {
-                base: 'vs',
-                inherit: true,
-                rules: [],
-                colors: {
-                    'editor.background': '#ffffff',
-                    'editor.foreground': '#333333',
-                    'editorLineNumber.foreground': '#999999',
-                    'editor.selectionBackground': '#add6ff',
-                    'editor.inactiveSelectionBackground': '#e5ebf1'
-                }
-            });
+        // Mobile detection
+        function detectMobile() {
+            const userAgent = navigator.userAgent.toLowerCase();
+            const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+            const isSmallScreen = window.innerWidth <= 768;
+            const isTouchDevice = 'ontouchstart' in window;
+            
+            return isMobileDevice || (isSmallScreen && isTouchDevice);
+        }
 
-            monacoEditor = monaco.editor.create(document.getElementById('editor-container'), {
-                value: '// Welcome to Code Share!\n// Start typing your code here...\n\n',
-                language: 'javascript',
-                theme: 'code-share-theme',
-                fontSize: 14,
-                fontFamily: "'Fira Code', 'Cascadia Code', 'JetBrains Mono', 'Source Code Pro', monospace",
-                lineNumbers: 'on',
-                minimap: { enabled: false },
-                scrollBeyondLastLine: false,
-                automaticLayout: true,
-                wordWrap: 'on',
-                folding: true,
-                renderLineHighlight: 'all',
-                selectOnLineNumbers: true,
-                roundedSelection: false,
-                readOnly: false,
-                cursorStyle: 'line',
-                cursorBlinking: 'blink',
-                tabSize: 4,
-                insertSpaces: true
-            });
+        isMobile = detectMobile();
+        console.log('Mobile detected:', isMobile);
 
+        // Initialize appropriate editor
+        if (isMobile) {
+            initMobileEditor();
+        } else {
+            initMonacoEditor();
+        }
+
+        function initMobileEditor() {
+            console.log('Initializing mobile editor');
+            const mobileEditor = document.getElementById('mobile-editor');
+            const editorContainer = document.getElementById('editor-container');
+            
+            // Hide Monaco container and show mobile editor
+            editorContainer.style.display = 'none';
+            mobileEditor.style.display = 'block';
+            
+            currentEditor = mobileEditor;
+            
+            // Set default content
+            mobileEditor.value = '// Welcome to Code Share!\n// Start typing your code here...\n\n';
+            
             initializeCollaboration();
-        });
+        }
+
+        function initMonacoEditor() {
+            console.log('Initializing Monaco editor');
+            // Hide mobile editor
+            document.getElementById('mobile-editor').style.display = 'none';
+            
+            require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs' } });
+            require(['vs/editor/editor.main'], function () {
+                monaco.editor.defineTheme('code-share-theme', {
+                    base: 'vs',
+                    inherit: true,
+                    rules: [],
+                    colors: {
+                        'editor.background': '#ffffff',
+                        'editor.foreground': '#333333',
+                        'editorLineNumber.foreground': '#999999',
+                        'editor.selectionBackground': '#add6ff',
+                        'editor.inactiveSelectionBackground': '#e5ebf1'
+                    }
+                });
+
+                monacoEditor = monaco.editor.create(document.getElementById('editor-container'), {
+                    value: '// Welcome to Code Share!\n// Start typing your code here...\n\n',
+                    language: 'javascript',
+                    theme: 'code-share-theme',
+                    fontSize: 14,
+                    fontFamily: "'Fira Code', 'Cascadia Code', 'JetBrains Mono', 'Source Code Pro', monospace",
+                    lineNumbers: 'on',
+                    minimap: { enabled: window.innerWidth > 1200 },
+                    scrollBeyondLastLine: false,
+                    automaticLayout: true,
+                    wordWrap: 'on',
+                    folding: true,
+                    renderLineHighlight: 'all',
+                    selectOnLineNumbers: true,
+                    roundedSelection: false,
+                    readOnly: false,
+                    cursorStyle: 'line',
+                    cursorBlinking: 'blink',
+                    tabSize: 4,
+                    insertSpaces: true,
+                    // Mobile-specific options
+                    quickSuggestions: !isMobile,
+                    suggestOnTriggerCharacters: !isMobile,
+                    acceptSuggestionOnEnter: 'off',
+                    accessibilitySupport: 'auto'
+                });
+
+                currentEditor = monacoEditor;
+                initializeCollaboration();
+            });
+        }
 
         function initializeCollaboration() {
             const ydoc = new Y.Doc();
@@ -207,45 +445,48 @@
             awareness = provider.awareness;
             const localClientId = awareness.clientID || ydoc.clientID;
 
-            // Set user awareness
             const localUser = { 
                 name: currentUsername, 
                 color: colorFromId(localClientId),
-                language: 'javascript'
+                language: 'javascript',
+                isMobile: isMobile
             };
             awareness.setLocalState({ user: localUser, cursor: null });
 
-            // Y.js to Monaco synchronization
+            // Y.js synchronization
             ytext.observe(event => {
                 if (isUpdatingFromY) return;
                 
                 const content = ytext.toString();
-                if (monacoEditor.getValue() !== content) {
+                const currentValue = isMobile ? currentEditor.value : currentEditor.getValue();
+                
+                if (currentValue !== content) {
                     isUpdatingFromY = true;
-                    const position = monacoEditor.getPosition();
-                    monacoEditor.setValue(content);
-                    monacoEditor.setPosition(position);
+                    if (isMobile) {
+                        const cursorPos = currentEditor.selectionStart;
+                        currentEditor.value = content;
+                        currentEditor.setSelectionRange(cursorPos, cursorPos);
+                    } else {
+                        const position = currentEditor.getPosition();
+                        currentEditor.setValue(content);
+                        currentEditor.setPosition(position);
+                    }
                     isUpdatingFromY = false;
                 }
             });
 
-            // Monaco to Y.js synchronization
-            monacoEditor.onDidChangeModelContent((event) => {
-                if (isUpdatingFromY) return;
-                
-                ydoc.transact(() => {
-                    const changes = event.changes.sort((a, b) => b.rangeOffset - a.rangeOffset);
-                    
-                    for (const change of changes) {
-                        if (change.rangeLength > 0) {
-                            ytext.delete(change.rangeOffset, change.rangeLength);
-                        }
-                        if (change.text.length > 0) {
-                            ytext.insert(change.rangeOffset, change.text);
-                        }
-                    }
-                }, 'monaco');
-            });
+            // Editor to Y.js synchronization
+            if (isMobile) {
+                currentEditor.addEventListener('input', (e) => {
+                    if (isUpdatingFromY) return;
+                    updateYText();
+                });
+            } else {
+                currentEditor.onDidChangeModelContent((event) => {
+                    if (isUpdatingFromY) return;
+                    updateYTextFromMonaco(event);
+                });
+            }
 
             // Handle connection status
             const connectionStatusEl = document.querySelector('.connection-status');
@@ -261,7 +502,11 @@
                     const content = ytext.toString();
                     if (content.trim()) {
                         isUpdatingFromY = true;
-                        monacoEditor.setValue(content);
+                        if (isMobile) {
+                            currentEditor.value = content;
+                        } else {
+                            currentEditor.setValue(content);
+                        }
                         isUpdatingFromY = false;
                     }
                 }
@@ -270,16 +515,42 @@
             setupCursorTracking();
         }
 
+        function updateYText() {
+            const before = ytext.toString();
+            const after = currentEditor.value;
+            if (before === after) return;
+            
+            ydoc.transact(() => {
+                ytext.delete(0, ytext.length);
+                ytext.insert(0, after);
+            }, 'textarea');
+        }
+
+        function updateYTextFromMonaco(event) {
+            ydoc.transact(() => {
+                const changes = event.changes.sort((a, b) => b.rangeOffset - a.rangeOffset);
+                for (const change of changes) {
+                    if (change.rangeLength > 0) {
+                        ytext.delete(change.rangeOffset, change.rangeLength);
+                    }
+                    if (change.text.length > 0) {
+                        ytext.insert(change.rangeOffset, change.text);
+                    }
+                }
+            }, 'monaco');
+        }
+
         function colorFromId(id) {
             const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#FFA07A', '#98FB98'];
             return colors[id % colors.length];
         }
 
         function setupCursorTracking() {
+            if (isMobile) return; // Skip cursor tracking on mobile
+            
             const container = document.getElementById('editor-container');
             const overlay = document.getElementById('cursor-overlay');
 
-            // Track mouse movement for cursor awareness
             container.addEventListener('mousemove', (e) => {
                 const rect = container.getBoundingClientRect();
                 const x = (e.clientX - rect.left) / rect.width;
@@ -291,7 +562,6 @@
                 awareness.setLocalStateField('cursor', null);
             });
 
-            // Render other users' cursors
             function renderCursors() {
                 const rect = container.getBoundingClientRect();
                 overlay.innerHTML = '';
@@ -323,7 +593,7 @@
                     cursorEl.appendChild(dot);
 
                     const label = document.createElement('div');
-                    label.textContent = user.name;
+                    label.textContent = user.name + (user.isMobile ? ' 📱' : '');
                     label.style.position = 'absolute';
                     label.style.left = '15px';
                     label.style.top = '-8px';
@@ -348,9 +618,11 @@
         // Language selector
         document.getElementById('language-selector').addEventListener('change', (e) => {
             const language = e.target.value;
-            monaco.editor.setModelLanguage(monacoEditor.getModel(), language);
             
-            // Update user awareness with current language
+            if (!isMobile && monacoEditor) {
+                monaco.editor.setModelLanguage(monacoEditor.getModel(), language);
+            }
+            
             if (awareness) {
                 const currentState = awareness.getLocalState();
                 const user = currentState.user || {};
@@ -360,20 +632,55 @@
         });
 
         // Copy functionality
-        document.getElementById('copy-btn').addEventListener('click', async () => {
+        async function copyCode() {
             try {
-                const code = monacoEditor.getValue();
+                const code = isMobile ? currentEditor.value : currentEditor.getValue();
                 await navigator.clipboard.writeText(code);
                 showToast('Code copied to clipboard! 📋');
             } catch (err) {
-                // Fallback for older browsers
                 const textarea = document.createElement('textarea');
-                textarea.value = monacoEditor.getValue();
+                textarea.value = isMobile ? currentEditor.value : currentEditor.getValue();
                 document.body.appendChild(textarea);
                 textarea.select();
                 document.execCommand('copy');
                 document.body.removeChild(textarea);
                 showToast('Code copied to clipboard! 📋');
+            }
+        }
+
+        document.getElementById('copy-btn').addEventListener('click', copyCode);
+        document.getElementById('mobile-copy-btn').addEventListener('click', copyCode);
+
+        // Mobile fullscreen toggle
+        document.getElementById('mobile-fullscreen').addEventListener('click', () => {
+            const editor = document.getElementById('mobile-editor');
+            const wrapper = document.querySelector('.editor-wrapper');
+            
+            if (editor.classList.contains('fullscreen')) {
+                editor.classList.remove('fullscreen');
+                editor.style.position = '';
+                editor.style.top = '';
+                editor.style.left = '';
+                editor.style.width = '';
+                editor.style.height = '';
+                editor.style.zIndex = '';
+                editor.style.background = '';
+                document.getElementById('mobile-fullscreen').textContent = '⛶ Focus Mode';
+                document.body.style.overflow = '';
+            } else {
+                editor.classList.add('fullscreen');
+                editor.style.position = 'fixed';
+                editor.style.top = '0';
+                editor.style.left = '0';
+                editor.style.width = '100vw';
+                editor.style.height = '100vh';
+                editor.style.zIndex = '9999';
+                editor.style.background = '#fff';
+                editor.style.padding = '20px';
+                editor.style.boxSizing = 'border-box';
+                document.getElementById('mobile-fullscreen').textContent = '✕ Exit Focus';
+                document.body.style.overflow = 'hidden';
+                editor.focus();
             }
         });
 
@@ -395,11 +702,20 @@
                     case 'c':
                         if (e.shiftKey) {
                             e.preventDefault();
-                            document.getElementById('copy-btn').click();
+                            copyCode();
                         }
                         break;
                 }
             }
+        });
+
+        // Handle orientation change
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                if (!isMobile && monacoEditor) {
+                    monacoEditor.layout();
+                }
+            }, 100);
         });
 
     </script>
