@@ -19,6 +19,7 @@
         /*<![CDATA[*/
         const ywsUrl = /*[[${ywsUrl}]]*/ 'ws://localhost:1234';
         const docId = /*[[${document.uniqueId}]]*/ 'default-room';
+        const currentUsername = /*[[${currentUser.username}]]*/ 'Anonymous';
         /*]]>*/
 
         import * as Y from 'https://esm.sh/yjs@14.0.0-6';
@@ -98,7 +99,7 @@
             return `hsl(${hue}, 80%, 55%)`;
         }
 
-        const localUser = { name: `User ${localClientId}`, color: colorFromId(localClientId) };
+        const localUser = { name: currentUsername, color: colorFromId(localClientId) };
         awareness.setLocalState({ user: localUser, cursor: null });
 
         function clamp01(v) { return Math.max(0, Math.min(1, v)); }

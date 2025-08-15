@@ -50,11 +50,19 @@ public class EditorController {
     }
 
     @GetMapping("/editor/{documentId}")
-    public String editor(@PathVariable String documentId, Model model) {
+    public String editor(@PathVariable String documentId, Model model, @AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+        
         Document document = documentRepository.findByUniqueId(documentId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid document ID:" + documentId));
+        
+        User user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow();
+        
         model.addAttribute("document", document);
         model.addAttribute("ywsUrl", yWebsocketUrl);
+        model.addAttribute("currentUser", user);
         return "editor";
     }
 }

@@ -45,4 +45,4 @@ services:
     plan: free
     env: node
     buildCommand: "npm install -g @y/websocket-server"
-    startCommand: "HOST=0.0.0.0 PORT=1234 npx @y/websocket-server" 
+    startCommand: "HOST=0.0.0.0 PORT=1234 npx @y/websocket-server"
