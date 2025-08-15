@@ -1,26 +1,42 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Dashboard</title>
+    <title>Code Share Dashboard</title>
     <link rel="stylesheet" th:href="@{/style.css}">
 </head>
 <body>
     <div class="container">
-        <h1>My Documents</h1>
-        <div th:if="${param.loginSuccess}" class="alert success">Giriş başarılı.</div>
-        <form th:action="@{/documents/create}" method="post">
-            <button type="submit">Create New Document</button>
-        </form>
-        <hr/>
-        <h2>Existing Documents</h2>
-        <ul>
+        <h1>🚀 Code Share Dashboard</h1>
+        <div th:if="${param.loginSuccess}" class="alert success">Welcome to Code Share! 🎉</div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <form th:action="@{/documents/create}" method="post" style="display: inline-block;">
+                <button type="submit">✨ Create New Code Share</button>
+            </form>
+        </div>
+        
+        <hr style="border: none; height: 2px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin: 40px 0; border-radius: 2px;"/>
+        
+        <h2>📚 Your Code Shares</h2>
+        <div th:if="${#lists.isEmpty(documents)}" style="text-align: center; color: #718096; margin: 40px 0; font-style: italic;">
+            <p>🎨 No code shares yet. Create your first one above!</p>
+        </div>
+        <ul th:if="${!#lists.isEmpty(documents)}">
             <li th:each="doc : ${documents}">
-                <a th:href="@{/editor/{id}(id=${doc.uniqueId})}" th:text="'Document ' + ${doc.uniqueId}"></a>
+                <a th:href="@{/editor/{id}(id=${doc.uniqueId})}">
+                    <span th:text="'Code Share - ' + ${doc.uniqueId}"></span>
+                    <small style="color: #a0aec0; font-size: 12px; margin-left: 10px;">Click to edit</small>
+                </a>
             </li>
         </ul>
-        <form th:action="@{/logout}" method="post">
-            <button type="submit">Logout</button>
-        </form>
+        
+        <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+            <form th:action="@{/logout}" method="post" style="display: inline-block;">
+                <button type="submit" style="background: #e53e3e; box-shadow: 0 4px 15px rgba(229, 62, 62, 0.4);">
+                    👋 Logout
+                </button>
+            </form>
+        </div>
     </div>
 </body>
 </html> 

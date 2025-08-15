@@ -1,20 +1,147 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Text Editor - [[${document.uniqueId}]]</title>
+    <title>Code Share - [[${document.uniqueId}]]</title>
     <link rel="stylesheet" th:href="@{/style.css}">
+    <style>
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px 0;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .header h1 {
+            margin: 0;
+            color: #2d3748;
+            font-size: 28px;
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .language-selector {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .copy-btn {
+            padding: 8px 16px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        .copy-btn:hover {
+            background: #45a049;
+        }
+        .editor-wrapper {
+            position: relative;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .editor-header {
+            background: #f8f9fa;
+            padding: 12px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .document-info {
+            font-size: 14px;
+            color: #6c757d;
+        }
+        .connection-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        .connected .status-dot { background: #28a745; }
+        .disconnected .status-dot { background: #dc3545; }
+        .connecting .status-dot { background: #ffc107; }
+        #editor-container {
+            height: 500px;
+            position: relative;
+        }
+        #cursor-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 2000;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+    </style>
 </head>
 <body>
-    <h1>Collaborative Text Editor</h1>
-    <p>Document ID: <span th:text="${document.uniqueId}"></span></p>
-    <div>
-        Connection status: <span class="connection-status"></span>
-    </div>
-    <div id="editor-container" style="position: relative; width: 100%; height: 400px;">
-        <textarea id="editor-textarea" style="width: 100%; height: 100%;"></textarea>
-        <div id="cursor-overlay" style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; pointer-events: none;"></div>
+    <div class="header">
+        <h1>🚀 Code Share</h1>
+        <div class="controls">
+            <select id="language-selector" class="language-selector">
+                <option value="javascript">JavaScript</option>
+                <option value="java">Java</option>
+                <option value="html">HTML</option>
+                <option value="markdown">Markdown</option>
+                <option value="css">CSS</option>
+                <option value="python">Python</option>
+                <option value="json">JSON</option>
+                <option value="plaintext">Plain Text</option>
+            </select>
+            <button id="copy-btn" class="copy-btn">📋 Copy Code</button>
+        </div>
     </div>
 
+    <div class="editor-wrapper">
+        <div class="editor-header">
+            <div class="document-info">
+                <strong>Document:</strong> <span th:text="${document.uniqueId}"></span>
+            </div>
+            <div class="connection-indicator">
+                <span class="connection-status">connecting</span>
+                <div class="status-dot"></div>
+            </div>
+        </div>
+        <div id="editor-container">
+            <div id="cursor-overlay"></div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/loader.js"></script>
     <script type="module" th:inline="javascript">
         /*<![CDATA[*/
         const ywsUrl = /*[[${ywsUrl}]]*/ 'ws://localhost:1234';
@@ -25,146 +152,255 @@
         import * as Y from 'https://esm.sh/yjs@14.0.0-6';
         import { WebsocketProvider } from 'https://esm.sh/@y/websocket@4.0.0-1?alias=yjs:https://esm.sh/yjs@14.0.0-6';
 
-        const ydoc = new Y.Doc();
-        // Room name is based on the unique document ID from the server
-        const provider = new WebsocketProvider(ywsUrl, docId, ydoc);
-        const ytext = ydoc.getText('codemirror');
-        const editor = document.getElementById('editor-textarea');
-        
-        // Add minimal diff helper to avoid full rewrites
-        function computeTextDiff(oldStr, newStr) {
-            let start = 0;
-            const oldLen = oldStr.length;
-            const newLen = newStr.length;
-            while (start < oldLen && start < newLen && oldStr.charCodeAt(start) === newStr.charCodeAt(start)) {
-                start++;
-            }
-            let endOld = oldLen - 1;
-            let endNew = newLen - 1;
-            while (endOld >= start && endNew >= start && oldStr.charCodeAt(endOld) === newStr.charCodeAt(endNew)) {
-                endOld--;
-                endNew--;
-            }
-            const deleteCount = Math.max(0, endOld - start + 1);
-            const insertText = newStr.slice(start, endNew + 1);
-            return { index: start, deleteCount, insertText };
+        let monacoEditor;
+        let ytext;
+        let provider;
+        let awareness;
+        let isUpdatingFromY = false;
+
+        // Initialize Monaco Editor
+        require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs' } });
+        require(['vs/editor/editor.main'], function () {
+            // Configure Monaco
+            monaco.editor.defineTheme('code-share-theme', {
+                base: 'vs',
+                inherit: true,
+                rules: [],
+                colors: {
+                    'editor.background': '#ffffff',
+                    'editor.foreground': '#333333',
+                    'editorLineNumber.foreground': '#999999',
+                    'editor.selectionBackground': '#add6ff',
+                    'editor.inactiveSelectionBackground': '#e5ebf1'
+                }
+            });
+
+            monacoEditor = monaco.editor.create(document.getElementById('editor-container'), {
+                value: '// Welcome to Code Share!\n// Start typing your code here...\n\n',
+                language: 'javascript',
+                theme: 'code-share-theme',
+                fontSize: 14,
+                fontFamily: "'Fira Code', 'Cascadia Code', 'JetBrains Mono', 'Source Code Pro', monospace",
+                lineNumbers: 'on',
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+                wordWrap: 'on',
+                folding: true,
+                renderLineHighlight: 'all',
+                selectOnLineNumbers: true,
+                roundedSelection: false,
+                readOnly: false,
+                cursorStyle: 'line',
+                cursorBlinking: 'blink',
+                tabSize: 4,
+                insertSpaces: true
+            });
+
+            initializeCollaboration();
+        });
+
+        function initializeCollaboration() {
+            const ydoc = new Y.Doc();
+            provider = new WebsocketProvider(ywsUrl, docId, ydoc);
+            ytext = ydoc.getText('monaco');
+            awareness = provider.awareness;
+            const localClientId = awareness.clientID || ydoc.clientID;
+
+            // Set user awareness
+            const localUser = { 
+                name: currentUsername, 
+                color: colorFromId(localClientId),
+                language: 'javascript'
+            };
+            awareness.setLocalState({ user: localUser, cursor: null });
+
+            // Y.js to Monaco synchronization
+            ytext.observe(event => {
+                if (isUpdatingFromY) return;
+                
+                const content = ytext.toString();
+                if (monacoEditor.getValue() !== content) {
+                    isUpdatingFromY = true;
+                    const position = monacoEditor.getPosition();
+                    monacoEditor.setValue(content);
+                    monacoEditor.setPosition(position);
+                    isUpdatingFromY = false;
+                }
+            });
+
+            // Monaco to Y.js synchronization
+            monacoEditor.onDidChangeModelContent((event) => {
+                if (isUpdatingFromY) return;
+                
+                ydoc.transact(() => {
+                    const changes = event.changes.sort((a, b) => b.rangeOffset - a.rangeOffset);
+                    
+                    for (const change of changes) {
+                        if (change.rangeLength > 0) {
+                            ytext.delete(change.rangeOffset, change.rangeLength);
+                        }
+                        if (change.text.length > 0) {
+                            ytext.insert(change.rangeOffset, change.text);
+                        }
+                    }
+                }, 'monaco');
+            });
+
+            // Handle connection status
+            const connectionStatusEl = document.querySelector('.connection-status');
+            const connectionIndicator = document.querySelector('.connection-indicator');
+            provider.on('status', event => {
+                connectionStatusEl.textContent = event.status;
+                connectionIndicator.className = 'connection-indicator ' + event.status;
+            });
+
+            // Set initial content on sync
+            provider.on('sync', isSynced => {
+                if (isSynced) {
+                    const content = ytext.toString();
+                    if (content.trim()) {
+                        isUpdatingFromY = true;
+                        monacoEditor.setValue(content);
+                        isUpdatingFromY = false;
+                    }
+                }
+            });
+
+            setupCursorTracking();
         }
-
-        // Update textarea when ytext changes (ignore local-origin updates)
-        ytext.observe(event => {
-            if (event && event.transaction && event.transaction.origin === 'local') return;
-            const next = ytext.toString();
-            if (editor.value !== next) {
-                const selStart = editor.selectionStart;
-                const selEnd = editor.selectionEnd;
-                editor.value = next;
-                try { editor.setSelectionRange(selStart, selEnd); } catch (e) {}
-            }
-        });
-
-        // Update ytext when textarea changes using minimal diff, mark origin as 'local'
-        editor.addEventListener('input', () => {
-            const before = ytext.toString();
-            const after = editor.value;
-            if (before === after) return;
-            const { index, deleteCount, insertText } = computeTextDiff(before, after);
-            ydoc.transact(() => {
-                if (deleteCount > 0) ytext.delete(index, deleteCount);
-                if (insertText.length > 0) ytext.insert(index, insertText);
-            }, 'local');
-        });
-
-        // Handle connection status display
-        const connectionStatusEl = document.querySelector('.connection-status');
-        provider.on('status', event => {
-            connectionStatusEl.textContent = event.status;
-            connectionStatusEl.className = 'connection-status ' + event.status;
-        });
-        
-        // Set initial value
-        provider.on('sync', isSynced => {
-            if (isSynced) {
-                editor.value = ytext.toString();
-            }
-        });
-
-        // Mouse tracking (awareness-based)
-        const container = document.getElementById('editor-container');
-        const overlay = document.getElementById('cursor-overlay');
-        const awareness = provider.awareness;
-        const localClientId = awareness.clientID || ydoc.clientID;
 
         function colorFromId(id) {
-            const hue = (id * 47) % 360;
-            return `hsl(${hue}, 80%, 55%)`;
+            const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#FFA07A', '#98FB98'];
+            return colors[id % colors.length];
         }
 
-        const localUser = { name: currentUsername, color: colorFromId(localClientId) };
-        awareness.setLocalState({ user: localUser, cursor: null });
+        function setupCursorTracking() {
+            const container = document.getElementById('editor-container');
+            const overlay = document.getElementById('cursor-overlay');
 
-        function clamp01(v) { return Math.max(0, Math.min(1, v)); }
+            // Track mouse movement for cursor awareness
+            container.addEventListener('mousemove', (e) => {
+                const rect = container.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / rect.width;
+                const y = (e.clientY - rect.top) / rect.height;
+                awareness.setLocalStateField('cursor', { x, y, t: Date.now() });
+            });
 
-        container.addEventListener('mousemove', (e) => {
-            const rect = container.getBoundingClientRect();
-            const x = clamp01((e.clientX - rect.left) / rect.width);
-            const y = clamp01((e.clientY - rect.top) / rect.height);
-            awareness.setLocalStateField('cursor', { x, y, t: Date.now() });
-        });
+            container.addEventListener('mouseleave', () => {
+                awareness.setLocalStateField('cursor', null);
+            });
 
-        container.addEventListener('mouseleave', () => {
-            awareness.setLocalStateField('cursor', null);
-        });
+            // Render other users' cursors
+            function renderCursors() {
+                const rect = container.getBoundingClientRect();
+                overlay.innerHTML = '';
+                const states = Array.from(awareness.getStates().entries());
+                
+                for (const [clientId, state] of states) {
+                    if (!state || clientId === awareness.clientID) continue;
+                    const cursor = state.cursor;
+                    if (!cursor || typeof cursor.x !== 'number' || typeof cursor.y !== 'number') continue;
+                    
+                    const user = state.user || { name: `User ${clientId}`, color: colorFromId(clientId) };
+                    const x = cursor.x * rect.width;
+                    const y = cursor.y * rect.height;
 
-        function renderCursors() {
-            const rect = container.getBoundingClientRect();
-            overlay.innerHTML = '';
-            const states = Array.from(awareness.getStates().entries());
-            for (const [clientId, state] of states) {
-                if (!state || clientId === localClientId) continue;
-                const cursor = state.cursor;
-                if (!cursor || typeof cursor.x !== 'number' || typeof cursor.y !== 'number') continue;
-                const user = state.user || { name: `User ${clientId}`, color: colorFromId(clientId) };
-                const x = cursor.x * rect.width;
-                const y = cursor.y * rect.height;
+                    const cursorEl = document.createElement('div');
+                    cursorEl.style.position = 'absolute';
+                    cursorEl.style.left = `${x}px`;
+                    cursorEl.style.top = `${y}px`;
+                    cursorEl.style.transform = 'translate(-50%, -50%)';
+                    cursorEl.style.pointerEvents = 'none';
+                    cursorEl.style.zIndex = '1001';
 
-                const el = document.createElement('div');
-                el.style.position = 'absolute';
-                el.style.left = `${x}px`;
-                el.style.top = `${y}px`;
-                el.style.transform = 'translate(-50%, -50%)';
-                el.style.pointerEvents = 'none';
+                    const dot = document.createElement('div');
+                    dot.style.width = '12px';
+                    dot.style.height = '12px';
+                    dot.style.borderRadius = '50%';
+                    dot.style.background = user.color;
+                    dot.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+                    cursorEl.appendChild(dot);
 
-                const dot = document.createElement('div');
-                dot.style.width = '8px';
-                dot.style.height = '8px';
-                dot.style.borderRadius = '50%';
-                dot.style.background = user.color;
-                dot.style.boxShadow = '0 0 0 2px rgba(255,255,255,0.8)';
-                el.appendChild(dot);
+                    const label = document.createElement('div');
+                    label.textContent = user.name;
+                    label.style.position = 'absolute';
+                    label.style.left = '15px';
+                    label.style.top = '-8px';
+                    label.style.fontSize = '11px';
+                    label.style.padding = '2px 8px';
+                    label.style.borderRadius = '12px';
+                    label.style.color = '#fff';
+                    label.style.background = user.color;
+                    label.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+                    label.style.fontWeight = '500';
+                    label.style.whiteSpace = 'nowrap';
+                    cursorEl.appendChild(label);
 
-                const label = document.createElement('div');
-                label.textContent = user.name;
-                label.style.position = 'absolute';
-                label.style.left = '10px';
-                label.style.top = '-6px';
-                label.style.fontSize = '12px';
-                label.style.padding = '2px 6px';
-                label.style.borderRadius = '10px';
-                label.style.color = '#fff';
-                label.style.background = user.color;
-                label.style.boxShadow = '0 1px 2px rgba(0,0,0,0.2)';
-                el.appendChild(label);
-
-                overlay.appendChild(el);
+                    overlay.appendChild(cursorEl);
+                }
             }
+
+            awareness.on('update', renderCursors);
+            window.addEventListener('resize', renderCursors);
         }
 
-        awareness.on('update', renderCursors);
-        window.addEventListener('resize', renderCursors);
-        if ('ResizeObserver' in window) {
-            new ResizeObserver(() => renderCursors()).observe(container);
+        // Language selector
+        document.getElementById('language-selector').addEventListener('change', (e) => {
+            const language = e.target.value;
+            monaco.editor.setModelLanguage(monacoEditor.getModel(), language);
+            
+            // Update user awareness with current language
+            if (awareness) {
+                const currentState = awareness.getLocalState();
+                const user = currentState.user || {};
+                user.language = language;
+                awareness.setLocalStateField('user', user);
+            }
+        });
+
+        // Copy functionality
+        document.getElementById('copy-btn').addEventListener('click', async () => {
+            try {
+                const code = monacoEditor.getValue();
+                await navigator.clipboard.writeText(code);
+                showToast('Code copied to clipboard! 📋');
+            } catch (err) {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = monacoEditor.getValue();
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast('Code copied to clipboard! 📋');
+            }
+        });
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
         }
-        renderCursors();
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 's':
+                        e.preventDefault();
+                        showToast('Auto-saved! ✓');
+                        break;
+                    case 'c':
+                        if (e.shiftKey) {
+                            e.preventDefault();
+                            document.getElementById('copy-btn').click();
+                        }
+                        break;
+                }
+            }
+        });
 
     </script>
 </body>

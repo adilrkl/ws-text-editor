@@ -1,27 +1,33 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Register</title>
+    <title>Register - Code Share</title>
     <link rel="stylesheet" th:href="@{/style.css}">
 </head>
 <body>
-    <div class="container">
-        <h1>Register</h1>
-        <div th:if="${error}" class="alert error" th:text="${error}"></div>
+    <div class="auth-container">
+        <h1>🚀 Join Code Share</h1>
+        <p style="text-align: center; color: #718096; margin-bottom: 30px;">Create your account to start sharing code</p>
+        
         <div th:if="${success}" class="alert success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert error" th:text="${error}"></div>
+        
         <form th:action="@{/register}" method="post">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
             <div>
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" required autofocus>
+                <label for="username">👤 Choose Username</label>
+                <input type="text" id="username" name="username" required autofocus placeholder="Enter a unique username">
             </div>
             <div>
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required>
+                <label for="password">🔐 Create Password</label>
+                <input type="password" id="password" name="password" required placeholder="Choose a secure password">
             </div>
-            <button type="submit">Register</button>
+            <button type="submit">🎉 Create Account</button>
         </form>
-        <p>Already have an account? <a href="/login">Login here</a></p>
+        
+        <p style="text-align: center; margin-top: 20px; color: #718096;">
+            Already have an account? <a href="/login">Sign in here</a>
+        </p>
     </div>
 </body>
 </html> 

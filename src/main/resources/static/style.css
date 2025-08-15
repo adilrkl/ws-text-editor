@@ -1,46 +1,200 @@
+/* Modern Code Share Platform Styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
 body {
-    font-family: Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: #333;
+    line-height: 1.6;
+}
+
+.container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 40px 20px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    margin-top: 40px;
+    margin-bottom: 40px;
 }
 
-#editor-container {
-    position: relative;
-    border: 1px solid #ccc;
+/* Dashboard Styles */
+h1 {
+    color: #2d3748;
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 30px;
+    text-align: center;
 }
 
-#cursor-layer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none; /* Allows clicks to go through to the textarea */
-    z-index: 10;
+h2 {
+    color: #4a5568;
+    font-size: 24px;
+    font-weight: 600;
+    margin: 30px 0 20px 0;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 10px;
 }
 
-.user-cursor {
-    position: absolute;
-    width: 2px;
-    height: 1.2em; /* Match line height */
-    background-color: red; /* Default color */
-    opacity: 0.5;
-}
-
-.user-cursor-label {
-    position: absolute;
-    top: -1.4em;
-    left: 2px;
-    background-color: red; /* Match cursor color */
+/* Button Styles */
+button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    font-size: 12px;
-    padding: 2px 4px;
-    border-radius: 2px;
-    white-space: nowrap;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
 
+button:active {
+    transform: translateY(0);
+}
+
+/* Form Styles */
+form {
+    margin: 20px 0;
+}
+
+input[type="text"], input[type="password"] {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+    margin-bottom: 15px;
+}
+
+input[type="text"]:focus, input[type="password"]:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #4a5568;
+}
+
+/* Document List */
+ul {
+    list-style: none;
+    padding: 0;
+}
+
+li {
+    background: #f7fafc;
+    margin: 10px 0;
+    border-radius: 12px;
+    padding: 15px 20px;
+    border-left: 4px solid #667eea;
+    transition: all 0.3s ease;
+}
+
+li:hover {
+    background: #edf2f7;
+    transform: translateX(5px);
+}
+
+li a {
+    text-decoration: none;
+    color: #4a5568;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+}
+
+li a:before {
+    content: "📄";
+    margin-right: 10px;
+    font-size: 18px;
+}
+
+li a:hover {
+    color: #667eea;
+}
+
+/* Alert Styles */
+.alert {
+    padding: 15px 20px;
+    border-radius: 12px;
+    margin: 20px 0;
+    font-weight: 500;
+    border-left: 4px solid;
+}
+
+.alert.success {
+    background-color: #f0fff4;
+    color: #2f855a;
+    border-left-color: #38a169;
+}
+
+.alert.error {
+    background-color: #fff5f5;
+    color: #c53030;
+    border-left-color: #e53e3e;
+}
+
+/* Login/Register Pages */
+.auth-container {
+    max-width: 400px;
+    margin: 100px auto;
+    padding: 40px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Links */
+a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: #5a67d8;
+    text-decoration: underline;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        margin-top: 20px;
+        margin-bottom: 20px;
+        padding: 20px;
+        border-radius: 15px;
+    }
+    
+    h1 {
+        font-size: 24px;
+    }
+    
+    button {
+        width: 100%;
+        margin: 10px 0;
+    }
+}
+
+/* Connection Status - Legacy support for old templates */
 .connection-status {
     padding: 5px 10px;
     border-radius: 4px;
@@ -52,70 +206,4 @@ body {
 .disconnected { background-color: #dc3545; }
 .connecting { background-color: #ffc107; color: black; }
 
-/* Form Styles */
-.container {
-    max-width: 400px;
-    margin: 50px auto;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    background-color: #f9f9f9;
-}
-
-.container h1 {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.container form div {
-    margin-bottom: 15px;
-}
-
-.container label {
-    display: block;
-    margin-bottom: 5px;
-}
-
-.container input[type="text"],
-.container input[type="password"] {
-    width: 100%;
-    padding: 8px;
-    box-sizing: border-box;
-}
-
-.container button {
-    width: 100%;
-    padding: 10px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.container button:hover {
-    background-color: #0056b3;
-}
-
-.container p {
-    text-align: center;
-    margin-top: 15px;
-}
-
-/* Alerts */
-.alert {
-    padding: 10px 12px;
-    border-radius: 4px;
-    margin-bottom: 15px;
-    border: 1px solid transparent;
-}
-.alert.success {
-    background-color: #d4edda;
-    color: #155724;
-    border-color: #c3e6cb;
-}
-.alert.error {
-    background-color: #f8d7da;
-    color: #721c24;
-    border-color: #f5c6cb;
-}
+/* Editor specific styles moved to inline styles in editor.html for better organization */
