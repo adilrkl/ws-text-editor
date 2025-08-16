@@ -1,3 +1,40 @@
+/* Mobile viewport and zoom prevention */
+* {
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+body {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    touch-action: manipulation;
+}
+
+/* Allow text selection in editor */
+#editor-container,
+#editor-container * {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+}
+
+/* Prevent zoom on input focus */
+input, select, textarea {
+    font-size: 16px !important;
+    transform-origin: left top;
+    -webkit-text-size-adjust: 100%;
+}
+
+/* Touch-friendly controls */
+.language-selector, .copy-btn {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
 .header {
     display: flex;
     justify-content: space-between;
@@ -13,6 +50,25 @@
     font-size: 28px;
 }
 
+/* Mobile responsive header */
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+        padding: 10px 0;
+    }
+    
+    .header h1 {
+        font-size: 24px;
+    }
+    
+    .controls {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
 .controls {
     display: flex;
     gap: 15px;
@@ -24,8 +80,9 @@
     border: 2px solid #e0e0e0;
     border-radius: 8px;
     background: white;
-    font-size: 14px;
+    font-size: 16px;
     cursor: pointer;
+    min-height: 44px; /* Touch-friendly minimum size */
 }
 
 .copy-btn {
@@ -37,6 +94,8 @@
     cursor: pointer;
     font-weight: bold;
     transition: background 0.3s;
+    font-size: 16px;
+    min-height: 44px; /* Touch-friendly minimum size */
 }
 
 .copy-btn:hover {
@@ -58,6 +117,24 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+/* Mobile responsive editor header */
+@media (max-width: 768px) {
+    .editor-header {
+        flex-direction: column;
+        gap: 8px;
+        padding: 10px 15px;
+        text-align: center;
+    }
+    
+    .document-info {
+        order: 2;
+    }
+    
+    .connection-indicator {
+        order: 1;
+    }
 }
 
 .document-info {
@@ -93,6 +170,26 @@
 #editor-container {
     height: 500px;
     position: relative;
+    touch-action: manipulation;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Mobile responsive editor height */
+@media (max-width: 768px) {
+    #editor-container {
+        height: 400px;
+    }
+}
+
+/* Prevent Monaco editor zoom issues on mobile */
+#editor-container .monaco-editor,
+#editor-container .monaco-editor *,
+#editor-container .monaco-editor .view-lines,
+#editor-container .monaco-editor .inputarea {
+    touch-action: manipulation !important;
+    -webkit-text-size-adjust: 100% !important;
+    -webkit-user-select: text !important;
+    user-select: text !important;
 }
 
 #cursor-overlay {
@@ -116,6 +213,16 @@
     opacity: 0;
     transition: opacity 0.3s;
     z-index: 2000;
+}
+
+/* Mobile responsive toast */
+@media (max-width: 768px) {
+    .toast {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        text-align: center;
+    }
 }
 
 .toast.show {

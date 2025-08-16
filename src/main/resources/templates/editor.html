@@ -2,6 +2,8 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>Code Share - [[${document.uniqueId}]]</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <link rel="stylesheet" th:href="@{/style.css}">
     <link rel="stylesheet" th:href="@{/css/editor.css}">
 </head>
@@ -74,26 +76,49 @@
                 }
             });
 
+            // Detect if on mobile device
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
             monacoEditor = monaco.editor.create(document.getElementById('editor-container'), {
                 value: '// Welcome to Code Share!\n// Start typing your code here...\n\n',
                 language: 'javascript',
                 theme: 'code-share-theme',
-                fontSize: 14,
+                fontSize: isMobile ? 16 : 14, // Larger font on mobile to prevent zoom
                 fontFamily: "'Fira Code', 'Cascadia Code', 'JetBrains Mono', 'Source Code Pro', monospace",
-                lineNumbers: 'on',
+                lineNumbers: isMobile ? 'off' : 'on', // Hide line numbers on mobile for more space
                 minimap: { enabled: false },
                 scrollBeyondLastLine: false,
                 automaticLayout: true,
                 wordWrap: 'on',
-                folding: true,
+                folding: !isMobile, // Disable folding on mobile
                 renderLineHighlight: 'all',
-                selectOnLineNumbers: true,
+                selectOnLineNumbers: !isMobile,
                 roundedSelection: false,
                 readOnly: false,
                 cursorStyle: 'line',
                 cursorBlinking: 'blink',
                 tabSize: 4,
-                insertSpaces: true
+                insertSpaces: true,
+                // Mobile-specific options
+                mouseWheelZoom: false, // Disable zoom with mouse wheel
+                contextmenu: !isMobile, // Disable context menu on mobile
+                quickSuggestions: !isMobile, // Disable suggestions on mobile to prevent UI interference
+                suggestOnTriggerCharacters: !isMobile,
+                acceptSuggestionOnEnter: 'off', // Prevent accidental suggestion acceptance
+                parameterHints: { enabled: !isMobile },
+                hover: { enabled: !isMobile },
+                links: false, // Disable links on mobile
+                colorDecorators: !isMobile,
+                lightbulb: { enabled: false }, // Disable lightbulb on mobile
+                overviewRulerBorder: false,
+                hideCursorInOverviewRuler: true,
+                scrollbar: {
+                    useShadows: false,
+                    verticalHasArrows: false,
+                    horizontalHasArrows: false,
+                    vertical: isMobile ? 'hidden' : 'auto',
+                    horizontal: isMobile ? 'hidden' : 'auto'
+                }
             });
 
             initializeCollaboration();
@@ -188,6 +213,28 @@
 
             container.addEventListener('mouseleave', () => {
                 awareness.setLocalStateField('cursor', null);
+            });
+
+            // Add touch event handling for mobile devices
+            container.addEventListener('touchmove', (e) => {
+                e.preventDefault(); // Prevent default touch behavior
+                const rect = container.getBoundingClientRect();
+                const touch = e.touches[0];
+                const x = (touch.clientX - rect.left) / rect.width;
+                const y = (touch.clientY - rect.top) / rect.height;
+                awareness.setLocalStateField('cursor', { x, y, t: Date.now() });
+            }, { passive: false });
+
+            container.addEventListener('touchend', () => {
+                awareness.setLocalStateField('cursor', null);
+            });
+
+            container.addEventListener('touchstart', (e) => {
+                const rect = container.getBoundingClientRect();
+                const touch = e.touches[0];
+                const x = (touch.clientX - rect.left) / rect.width;
+                const y = (touch.clientY - rect.top) / rect.height;
+                awareness.setLocalStateField('cursor', { x, y, t: Date.now() });
             });
 
             // Render other users' cursors
