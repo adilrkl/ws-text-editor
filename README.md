@@ -57,7 +57,7 @@ docker-compose up -d
 ```
 
 3. **Access the application**
-- Open your browser and navigate to: `http://localhost:8080`
+- Open your browser and navigate to: `http://localhost:9090`
 
 ### Option 2: Run Locally
 
@@ -85,7 +85,7 @@ npm start
 ```
 
 5. **Access the application**
-- Open your browser and navigate to: `http://localhost:8080`
+- Open your browser and navigate to: `http://localhost:9090`
 
 ## 📖 How to Use
 
@@ -156,7 +156,7 @@ The Y.js WebSocket server runs on port `1234` by default. Update the URL in temp
 
 The project includes Docker support with the following services:
 
-- **Web Application**: Spring Boot app (Port 8080)
+- **Web Application**: Spring Boot app (Port 9090)
 - **Y.js WebSocket**: Real-time sync server (Port 1234)
 - **Database**: PostgreSQL (Port 5432)
 
