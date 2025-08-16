@@ -57,7 +57,7 @@ docker-compose up -d
 ```
 
 3. **Uygulamaya erişin**
-- Tarayıcınızı açın ve şu adrese gidin: `http://localhost:8080`
+- Tarayıcınızı açın ve şu adrese gidin: `http://localhost:9090`
 
 ### Seçenek 2: Yerel Olarak Çalıştırma
 
@@ -85,7 +85,7 @@ npm start
 ```
 
 5. **Uygulamaya erişin**
-- Tarayıcınızı açın ve şu adrese gidin: `http://localhost:8080`
+- Tarayıcınızı açın ve şu adrese gidin: `http://localhost:9090`
 
 ## 📖 Nasıl Kullanılır
 
@@ -156,7 +156,7 @@ Y.js WebSocket sunucusu varsayılan olarak `1234` portunda çalışır. Gerekirs
 
 Proje aşağıdaki servislerle Docker desteği içerir:
 
-- **Web Uygulaması**: Spring Boot uygulaması (Port 8080)
+- **Web Uygulaması**: Spring Boot uygulaması (Port 9090)
 - **Y.js WebSocket**: Gerçek zamanlı senkronizasyon sunucusu (Port 1234)
 - **Veritabanı**: PostgreSQL (Port 5432)
 
